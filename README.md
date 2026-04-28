@@ -1,16 +1,39 @@
-# React + Vite
+# Sampler
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based drum sampler built with React and the Web Audio API. Eight pads mapped to keyboard keys, each with its own sample editor.
 
-Currently, two official plugins are available:
+**[Live demo →](https://tgstern.github.io/sampler/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **8 sample pads** mapped to keys `A S D F G H J K`
+- **Sample editor** per pad — pitch transpose, filter (LP/BP/HP), volume, pan, reverse, waveform start/stop
+- **Add samples** - click the plus button to upload custom samples
+- **Sample picker** — click the sample name in the editor to choose any sample from the active pack (preloaded with TR-808 pack)
+- **Randomize** — ↺ button replaces a pad with an unused sample from the current pack; pack menu randomizes all 8
+- **Keyboard navigation** — `↑` opens/closes the editor for the last-played pad; `← →` step through pads while editor is open
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Development
 
-## Expanding the ESLint configuration
+Requires Node 20+.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+### Adding sample packs
+
+Drop a folder of `.wav` files into `src/assets/`. It will appear automatically in the pack menu on the next build — no code changes needed.
+
+## Deployment
+
+Releases are manual. Bump the version in `package.json`, then:
+
+```bash
+npm run deploy
+```
+
+This triggers the [GitHub Actions release workflow](.github/workflows/release.yml), which builds the app, deploys to GitHub Pages, and creates a GitHub Release with auto-generated notes.
+
+Requires the [GitHub CLI](https://cli.github.com/) (`gh`) to be installed and authenticated. Install with `brew install gh`.
