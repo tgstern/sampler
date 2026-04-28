@@ -1,0 +1,79 @@
+/* MPC 2000 — warm gray-beige hardware */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  /* ── Chassis ── */
+  --body:      #bfb9b0;   /* main warm gray */
+  --body-hi:   #d4cfc8;   /* highlights / raised faces */
+  --body-lo:   #a8a49c;   /* shadows / lower panels */
+  --body-dk:   #8a8680;   /* darkest chassis areas */
+  --recess:    #5a5650;   /* recessed insets */
+
+  /* ── Faceplate label areas ── */
+  --plate:     #ccc8c0;   /* silk-screen panel */
+  --plate-hi:  #dedbd4;
+
+  /* ── Pads (black rubber) ── */
+  --pad:       #1c1a18;
+  --pad-face:  #141210;
+  --pad-hi:    #282420;
+  --pad-glow:  rgba(224, 120, 24, 0.55);
+
+  /* ── Accents ── */
+  --orange:    #e07818;
+  --orange-hi: #f0982a;
+  --orange-lo: #b05a08;
+  --amber:     #c06808;
+
+  /* ── LCD (small green display) ── */
+  --lcd-bg:    #2e3a22;
+  --lcd-text:  #a8c838;
+  --lcd-dim:   #607030;
+  --lcd-glow:  rgba(168, 200, 56, 0.15);
+
+  /* ── Text ── */
+  --ink:       #2a2420;   /* dark label text on panel */
+  --ink-mid:   #5a5650;
+  --ink-dim:   #8a8680;
+
+  --mono:  'Courier New', Courier, monospace;
+  --sans:  system-ui, 'Helvetica Neue', Arial, sans-serif;
+
+  font-family: var(--sans);
+  font-size: 13px;
+  background: var(--body);
+  color: var(--ink-mid);
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--body);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  outline: none;
+  background: none;
+  color: inherit;
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  background: var(--plate-hi);
+  border: 1px solid var(--body-lo);
+  border-bottom: 2px solid var(--body-dk);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
