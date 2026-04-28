@@ -20,7 +20,17 @@ export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSel
             ? <SamplePicker
                 currentFileName={pad.fileName}
                 samples={packSamples}
-                onSelect={(url, fileName) => onSelectSample(padKey, url, fileName)}
+                onSelect={(url, fileName) => {
+                  const previousFileName = pad.fileName;
+                  onSelectSample(padKey, url, fileName);
+                  if (typeof pendo !== 'undefined') {
+                    pendo.track("sample_selected_from_pack", {
+                      padKey,
+                      selectedFileName: fileName,
+                      previousFileName,
+                    });
+                  }
+                }}
               />
             : <span className="editor__filename">{pad.fileName}</span>
           }

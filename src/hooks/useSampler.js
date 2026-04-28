@@ -44,6 +44,14 @@ export function useSampler() {
     const picks = shuffled.slice(0, KEYS.length);
     setActivePack(packId);
     await Promise.all(picks.map((sample, i) => loadSampleFromUrl(KEYS[i], sample.url, sample.fileName)));
+    if (typeof pendo !== 'undefined') {
+      pendo.track("sample_pack_loaded", {
+        packId,
+        packLabel: pack.label,
+        sampleCount: picks.length,
+        padCount: KEYS.length,
+      });
+    }
   }, [loadSampleFromUrl]);
 
   const randomizePad = useCallback((key) => {
@@ -53,7 +61,17 @@ export function useSampler() {
     const available = pack.samples.filter(s => !usedNames.has(s.fileName));
     if (!available.length) return;
     const pick = available[Math.floor(Math.random() * available.length)];
+    const previousSample = pads[key]?.fileName || null;
     loadSampleFromUrl(key, pick.url, pick.fileName);
+    if (typeof pendo !== 'undefined') {
+      pendo.track("pad_sample_randomized", {
+        padKey: key,
+        packId: activePack,
+        previousSample,
+        newSample: pick.fileName,
+        availableSamplesCount: available.length,
+      });
+    }
   }, [activePack, pads, loadSampleFromUrl]);
 
   // Load default drum kit on mount; fall back to random if pack not found
@@ -74,6 +92,14 @@ export function useSampler() {
       audioEngine.setPad(key, buffer, pad.settings);
       return { ...prev, [key]: { ...pad, buffer, fileName: file.name } };
     });
+    if (typeof pendo !== 'undefined') {
+      pendo.track("sample_file_uploaded", {
+        padKey: key,
+        fileName: file.name,
+        fileType: file.type || "unknown",
+        fileSize: file.size,
+      });
+    }
   }, []);
 
   const triggerPad = useCallback((key) => {
@@ -83,13 +109,38 @@ export function useSampler() {
     setTimeout(() => {
       setActiveKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
     }, 120);
-  }, []);
+    if (typeof pendo !== 'undefined') {
+      setPads(prev => {
+        const pad = prev[key];
+        pendo.track("pad_triggered", {
+          padKey: key,
+          sampleFileName: pad?.fileName || null,
+          packId: activePack,
+        });
+        return prev;
+      });
+    }
+  }, [activePack]);
 
   const updateSettings = useCallback((key, patch) => {
     setPads(prev => {
       const pad = prev[key];
       const merged = { ...pad.settings, ...patch };
       audioEngine.setPad(key, pad.buffer, merged);
+      if (typeof pendo !== 'undefined') {
+        pendo.track("sample_settings_modified", {
+          padKey: key,
+          pitch: merged.pitch,
+          reverse: merged.reverse,
+          filterType: merged.filterType,
+          filterFreq: merged.filterFreq,
+          filterQ: merged.filterQ,
+          volume: merged.volume,
+          pan: merged.pan,
+          startRange: merged.start,
+          endRange: merged.end,
+        });
+      }
       return { ...prev, [key]: { ...pad, settings: merged } };
     });
   }, []);
