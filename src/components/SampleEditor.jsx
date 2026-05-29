@@ -4,7 +4,7 @@ import { SamplePicker } from './SamplePicker';
 
 const FILTER_TYPES = ['lowpass', 'bandpass', 'highpass'];
 
-export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSelectSample, onRandomize, onClose }) {
+export function SampleEditor({ padKey, pad, packSamples, activePack, onUpdateSettings, onSelectSample, onRandomize, onClose }) {
   if (!pad.buffer) return null;
 
   const s = pad.settings;
@@ -20,6 +20,8 @@ export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSel
             ? <SamplePicker
                 currentFileName={pad.fileName}
                 samples={packSamples}
+                padKey={padKey}
+                packId={activePack}
                 onSelect={(url, fileName) => onSelectSample(padKey, url, fileName)}
               />
             : <span className="editor__filename">{pad.fileName}</span>
@@ -39,7 +41,18 @@ export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSel
           start={s.start}
           end={s.end}
           reverse={s.reverse}
-          onRangeChange={(start, end) => onUpdateSettings(padKey, { start, end })}
+          onRangeChange={(start, end) => {
+            onUpdateSettings(padKey, { start, end });
+            if (typeof pendo !== 'undefined') {
+              pendo.track('sample_slice_adjusted', {
+                padKey,
+                fileName: pad.fileName,
+                startPosition: start,
+                endPosition: end,
+                sliceDuration: Math.abs(end - start),
+              });
+            }
+          }}
         />
         <div className="editor__waveform-labels">
           <span style={{ color: '#e07818' }}>◀ START</span>
@@ -58,7 +71,17 @@ export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSel
             <div className="editor__filter-type">
               <button
                 className={`filter-btn ${s.reverse ? 'filter-btn--active' : ''}`}
-                onClick={() => onUpdateSettings(padKey, { reverse: !s.reverse })}>
+                onClick={() => {
+                  const newReverse = !s.reverse;
+                  onUpdateSettings(padKey, { reverse: newReverse });
+                  if (typeof pendo !== 'undefined') {
+                    pendo.track('sample_reverse_toggled', {
+                      padKey,
+                      fileName: pad.fileName,
+                      reverseEnabled: newReverse,
+                    });
+                  }
+                }}>
                 REV
               </button>
             </div>
@@ -76,7 +99,18 @@ export function SampleEditor({ padKey, pad, packSamples, onUpdateSettings, onSel
               {FILTER_TYPES.map(t => (
                 <button key={t}
                   className={`filter-btn ${s.filterType === t ? 'filter-btn--active' : ''}`}
-                  onClick={() => onUpdateSettings(padKey, { filterType: t })}>
+                  onClick={() => {
+                    const previousFilterType = s.filterType;
+                    onUpdateSettings(padKey, { filterType: t });
+                    if (typeof pendo !== 'undefined') {
+                      pendo.track('filter_type_changed', {
+                        padKey,
+                        fileName: pad.fileName,
+                        previousFilterType,
+                        newFilterType: t,
+                      });
+                    }
+                  }}>
                   {t === 'lowpass' ? 'LP' : t === 'highpass' ? 'HP' : 'BP'}
                 </button>
               ))}

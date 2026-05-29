@@ -52,6 +52,7 @@ export default function App() {
               padKey={selectedKey}
               pad={pads[selectedKey]}
               packSamples={packSamples}
+              activePack={activePack}
               onUpdateSettings={updateSettings}
               onSelectSample={loadSampleFromUrl}
               onRandomize={randomizePad}

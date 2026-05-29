@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export function SamplePicker({ currentFileName, samples, onSelect }) {
+export function SamplePicker({ currentFileName, samples, onSelect, padKey, packId }) {
   const [open, setOpen] = useState(false);
   const [style, setStyle] = useState({});
   const triggerRef  = useRef(null);
@@ -43,7 +43,18 @@ export function SamplePicker({ currentFileName, samples, onSelect }) {
             <button
               key={s.fileName}
               className={`sample-picker__item ${s.fileName === currentFileName ? 'sample-picker__item--active' : ''}`}
-              onClick={() => { onSelect(s.url, s.fileName); setOpen(false); }}>
+              onClick={() => {
+                if (typeof pendo !== 'undefined') {
+                  pendo.track('sample_selected_from_pack', {
+                    padKey,
+                    previousFileName: currentFileName,
+                    newFileName: s.fileName,
+                    packId,
+                  });
+                }
+                onSelect(s.url, s.fileName);
+                setOpen(false);
+              }}>
               {s.name}
             </button>
           ))}

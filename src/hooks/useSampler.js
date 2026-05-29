@@ -10,6 +10,9 @@ const DEFAULT_PADS = KEYS.reduce((acc, key) => ({
   [key]: { label: key.toUpperCase(), buffer: null, fileName: null, settings: createDefaultSettings() },
 }), {});
 
+// Module-level dedup guard for default_kit_loaded (fires once per session)
+const defaultKitTracked = { current: false };
+
 export function useSampler() {
   const [pads, setPads]             = useState(DEFAULT_PADS);
   const [activeKeys, setActiveKeys] = useState(new Set());
@@ -35,6 +38,14 @@ export function useSampler() {
       const sample = pack.samples.find(s => s.fileName === fileName);
       return sample ? loadSampleFromUrl(KEYS[i], sample.url, sample.fileName) : Promise.resolve();
     }));
+    if (typeof pendo !== 'undefined') {
+      pendo.track('sample_pack_loaded', {
+        packId,
+        packName: pack.label,
+        sampleCount: assignments.length,
+        assignedSamples: assignments.join(', '),
+      });
+    }
   }, [loadSampleFromUrl]);
 
   const loadPackRandom = useCallback(async (packId) => {
@@ -44,6 +55,14 @@ export function useSampler() {
     const picks = shuffled.slice(0, KEYS.length);
     setActivePack(packId);
     await Promise.all(picks.map((sample, i) => loadSampleFromUrl(KEYS[i], sample.url, sample.fileName)));
+    if (typeof pendo !== 'undefined') {
+      pendo.track('all_pads_randomized', {
+        packId,
+        packName: pack.label,
+        selectedSamples: picks.map(s => s.fileName).join(', '),
+        totalSamplesInPack: pack.samples.length,
+      });
+    }
   }, [loadSampleFromUrl]);
 
   const randomizePad = useCallback((key) => {
@@ -52,18 +71,47 @@ export function useSampler() {
     const usedNames = new Set(Object.values(pads).map(p => p.fileName).filter(Boolean));
     const available = pack.samples.filter(s => !usedNames.has(s.fileName));
     if (!available.length) return;
+    const previousSample = pads[key]?.fileName || null;
     const pick = available[Math.floor(Math.random() * available.length)];
     loadSampleFromUrl(key, pick.url, pick.fileName);
+    if (typeof pendo !== 'undefined') {
+      pendo.track('pad_sample_randomized', {
+        padKey: key,
+        packId: activePack,
+        previousSample,
+        newSample: pick.fileName,
+        availableSamplesCount: available.length,
+      });
+    }
   }, [activePack, pads, loadSampleFromUrl]);
 
   // Load default drum kit on mount; fall back to random if pack not found
   useEffect(() => {
     const { packId, assignments } = DEFAULT_KIT;
-    if (SAMPLE_PACKS[packId]) {
-      loadKit(packId, assignments);
-    } else if (DEFAULT_PACK) {
-      loadPackRandom(DEFAULT_PACK);
-    }
+    const loadDefault = async () => {
+      let loadMethod;
+      let loadedCount;
+      if (SAMPLE_PACKS[packId]) {
+        await loadKit(packId, assignments);
+        loadMethod = 'loadKit';
+        loadedCount = assignments.length;
+      } else if (DEFAULT_PACK) {
+        await loadPackRandom(DEFAULT_PACK);
+        loadMethod = 'loadPackRandom';
+        loadedCount = KEYS.length;
+      }
+      if (!defaultKitTracked.current && typeof pendo !== 'undefined') {
+        defaultKitTracked.current = true;
+        const pack = SAMPLE_PACKS[packId] || SAMPLE_PACKS[DEFAULT_PACK];
+        pendo.track('default_kit_loaded', {
+          packId: packId || DEFAULT_PACK,
+          packName: pack?.label || 'unknown',
+          loadedSampleCount: loadedCount,
+          loadMethod,
+        });
+      }
+    };
+    loadDefault();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadSample = useCallback(async (key, file) => {
@@ -74,6 +122,14 @@ export function useSampler() {
       audioEngine.setPad(key, buffer, pad.settings);
       return { ...prev, [key]: { ...pad, buffer, fileName: file.name } };
     });
+    if (typeof pendo !== 'undefined') {
+      pendo.track('custom_sample_uploaded', {
+        padKey: key,
+        fileName: file.name,
+        fileType: file.type || file.name.split('.').pop(),
+        fileSize: file.size,
+      });
+    }
   }, []);
 
   const triggerPad = useCallback((key) => {
