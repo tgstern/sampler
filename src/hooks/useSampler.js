@@ -109,6 +109,7 @@ export function useSampler() {
   );
 
   // Load default drum kit on mount; fall back to random if pack not found
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const { packId, assignments } = DEFAULT_KIT;
     if (SAMPLE_PACKS[packId]) {
@@ -117,6 +118,7 @@ export function useSampler() {
       loadPackRandom(DEFAULT_PACK);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const loadSample = useCallback(async (key, file) => {
     const arrayBuffer = await file.arrayBuffer();
