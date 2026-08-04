@@ -1,24 +1,34 @@
-import { useState, useCallback } from 'react';
-import { useSampler } from './hooks/useSampler';
-import { useKeyboard } from './hooks/useKeyboard';
-import { PadGrid } from './components/PadGrid';
-import { SampleEditor } from './components/SampleEditor';
-import { PackMenu } from './components/PackMenu';
-import './App.css';
+import { useState, useCallback } from "react";
+import { useSampler } from "./hooks/useSampler";
+import { useKeyboard } from "./hooks/useKeyboard";
+import { PadGrid } from "./components/PadGrid";
+import { SampleEditor } from "./components/SampleEditor";
+import { PackMenu } from "./components/PackMenu";
+import "./App.css";
 
 export default function App() {
   const {
-    pads, activeKeys, lastKey, activePack, packSamples,
-    triggerPad, loadSample, loadSampleFromUrl, loadPackRandom, randomizePad, updateSettings, keys,
+    pads,
+    activeKeys,
+    lastKey,
+    activePack,
+    packSamples,
+    triggerPad,
+    loadSample,
+    loadSampleFromUrl,
+    loadPackRandom,
+    randomizePad,
+    updateSettings,
+    keys,
   } = useSampler();
   const [selectedKey, setSelectedKey] = useState(null);
 
   const handleSelect = (key) => {
-    setSelectedKey(prev => (prev === key ? null : key));
+    setSelectedKey((prev) => (prev === key ? null : key));
   };
 
   const handleArrowUp = useCallback(() => {
-    setSelectedKey(prev => {
+    setSelectedKey((prev) => {
       if (prev) return null;
       if (!lastKey || !pads[lastKey]?.buffer) return null;
       return lastKey;
@@ -26,20 +36,32 @@ export default function App() {
   }, [lastKey, pads]);
 
   // Navigate to the nearest loaded pad in direction, skipping empty pads
-  const navigatePad = useCallback((dir) => {
-    if (!selectedKey) return;
-    const idx = keys.indexOf(selectedKey);
-    const len = keys.length;
-    for (let step = 1; step < len; step++) {
-      const next = keys[(idx + dir * step + len) % len];
-      if (pads[next]?.buffer) { setSelectedKey(next); return; }
-    }
-  }, [selectedKey, keys, pads]);
+  const navigatePad = useCallback(
+    (dir) => {
+      if (!selectedKey) return;
+      const idx = keys.indexOf(selectedKey);
+      const len = keys.length;
+      for (let step = 1; step < len; step++) {
+        const next = keys[(idx + dir * step + len) % len];
+        if (pads[next]?.buffer) {
+          setSelectedKey(next);
+          return;
+        }
+      }
+    },
+    [selectedKey, keys, pads],
+  );
 
-  const handleArrowLeft  = useCallback(() => navigatePad(-1), [navigatePad]);
-  const handleArrowRight = useCallback(() => navigatePad(1),  [navigatePad]);
+  const handleArrowLeft = useCallback(() => navigatePad(-1), [navigatePad]);
+  const handleArrowRight = useCallback(() => navigatePad(1), [navigatePad]);
 
-  useKeyboard(triggerPad, keys, handleArrowUp, handleArrowLeft, handleArrowRight);
+  useKeyboard(
+    triggerPad,
+    keys,
+    handleArrowUp,
+    handleArrowLeft,
+    handleArrowRight,
+  );
 
   const editorOpen = !!(selectedKey && pads[selectedKey]?.buffer);
 
@@ -52,6 +74,7 @@ export default function App() {
               padKey={selectedKey}
               pad={pads[selectedKey]}
               packSamples={packSamples}
+              activePack={activePack}
               onUpdateSettings={updateSettings}
               onSelectSample={loadSampleFromUrl}
               onRandomize={randomizePad}
@@ -74,11 +97,12 @@ export default function App() {
 
       <div className="key-hint">
         <span className="key-hint__line">
-          <kbd>↑</kbd> {editorOpen ? 'close edit' : 'open edit'}
+          <kbd>↑</kbd> {editorOpen ? "close edit" : "open edit"}
         </span>
         {editorOpen && (
           <span className="key-hint__line">
-            <kbd>←</kbd><kbd>→</kbd> navigate pads
+            <kbd>←</kbd>
+            <kbd>→</kbd> navigate pads
           </span>
         )}
       </div>
